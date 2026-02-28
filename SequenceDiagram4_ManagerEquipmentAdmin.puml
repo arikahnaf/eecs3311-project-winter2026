@@ -1,0 +1,79 @@
+@startuml
+actor "Lab Manager" as Manager
+participant "ManagementUI" as UI
+participant "ManagementController" as Controller
+participant "EquipmentManager" as EquipMgr
+database "Database" as DB
+
+Manager -> UI : selectAddEquipment()
+UI -> Controller : initiateAddEquipment()
+Controller -> UI : showEquipmentForm()
+UI --> Manager : displayForm()
+
+Manager -> UI : enterEquipmentDetails(id, description, labLocation)
+UI -> Controller : addEquipment(equipmentData)
+
+Controller -> EquipMgr : isIdUnique(id)
+EquipMgr -> DB : checkEquipmentId(id)
+DB --> EquipMgr : idExists?
+EquipMgr --> Controller : isUnique
+
+alt duplicate ID
+  Controller -> UI : displayError("Equipment ID must be unique")
+else valid
+  Controller -> EquipMgr : saveEquipment(equipmentData)
+  EquipMgr -> DB : saveEquipment(equipmentData)
+  DB --> EquipMgr : equipmentId
+  EquipMgr --> Controller : equipmentAdded(equipmentId)
+  Controller -> UI : displaySuccess("Equipment added successfully")
+end
+
+== Manage existing equipment ==
+
+Manager -> UI : selectManageEquipment()
+UI -> Controller : getEquipmentList()
+Controller -> EquipMgr : getAllEquipment()
+EquipMgr -> DB : fetchAllEquipment()
+DB --> EquipMgr : equipmentList
+EquipMgr --> Controller : equipmentList
+Controller -> UI : displayEquipmentList(equipmentList)
+
+Manager -> UI : selectEquipment(equipmentId)
+UI -> Controller : getEquipmentDetails(equipmentId)
+Controller -> EquipMgr : getEquipment(equipmentId)
+EquipMgr -> DB : fetchEquipment(equipmentId)
+DB --> EquipMgr : equipment
+EquipMgr --> Controller : equipment
+Controller -> UI : showEquipmentDetails(equipment)
+
+alt enable equipment
+  Manager -> UI : enableEquipment()
+  UI -> Controller : setEquipmentStatus(equipmentId,"ENABLED")
+  Controller -> EquipMgr : updateStatus(equipmentId,"ENABLED")
+  EquipMgr -> DB : setStatus(equipmentId,"ENABLED")
+  DB --> EquipMgr : ok
+  EquipMgr --> Controller : statusUpdated
+  Controller -> UI : refreshDisplay()
+
+else disable equipment
+  Manager -> UI : disableEquipment()
+  UI -> Controller : setEquipmentStatus(equipmentId,"DISABLED")
+  Controller -> EquipMgr : updateStatus(equipmentId,"DISABLED")
+  EquipMgr -> DB : setStatus(equipmentId,"DISABLED")
+  DB --> EquipMgr : ok
+  EquipMgr --> Controller : statusUpdated
+  Controller -> UI : refreshDisplay()
+
+else mark for maintenance
+  Manager -> UI : markForMaintenance(startDate,endDate,reason)
+  UI -> Controller : scheduleMaintenance(equipmentId,startDate,endDate,reason)
+  Controller -> EquipMgr : setMaintenance(equipmentId,startDate,endDate,reason)
+  EquipMgr -> DB : updateMaintenanceSchedule(equipmentId,startDate,endDate,reason)
+  DB --> EquipMgr : ok
+  EquipMgr -> DB : setStatus(equipmentId,"MAINTENANCE")
+  DB --> EquipMgr : ok
+  EquipMgr --> Controller : maintenanceScheduled
+  Controller -> UI : displayMessage("Maintenance scheduled")
+end
+
+@enduml
