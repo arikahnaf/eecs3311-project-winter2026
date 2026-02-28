@@ -1,0 +1,52 @@
+@startuml
+|User|
+start
+:Enter email and password;
+:Submit registration form;
+
+repeat
+|System|
+if (Validate email format?) then (Valid)
+  ' continue
+else (Invalid)
+  :Display error: Invalid email;
+  |User|
+  :Re-enter email;
+endif
+repeat while (Validate email format?) is (Invalid)
+
+repeat
+|System|
+if (Validate password strength?) then (Strong)
+  ' continue
+else (Weak)
+  :Display error: Weak password\n(must contain uppercase,\nlowercase, numbers, symbols);
+  |User|
+  :Re-enter password;
+endif
+repeat while (Validate password strength?) is (Weak)
+
+repeat
+|System|
+if (Email unique?) then (Unique)
+  ' continue
+else (Not unique)
+  :Display error: Email already exists;
+  |User|
+  :Use different email;
+endif
+repeat while (Email unique?) is (Not unique)
+
+|System|
+if (User type?) then (Student/Faculty/Researcher)
+  :Set status = "Pending Approval";
+  :Notify Head Lab Coordinator;
+  :Display: "Awaiting departmental approval";
+else (Guest)
+  :Set status = "Approved";
+  :Create guest account;
+  :Display: "Registration successful";
+endif
+
+stop
+@enduml
