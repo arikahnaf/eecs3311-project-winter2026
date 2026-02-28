@@ -1,0 +1,72 @@
+@startuml
+actor User
+participant "RegistrationUI" as UI
+participant "RegistrationController" as Controller
+participant "UserManager" as UserMgr
+database "Database" as DB
+participant "NotificationService" as Notify
+participant "ApprovalService" as Approvals
+actor "Head Lab Coordinator" as Coordinator
+
+User -> UI : enterRegistrationDetails(email, password, userType, id)
+UI -> Controller : registerUser(details)
+
+Controller -> UserMgr : validateEmailFormat(email)
+alt email format invalid
+  UserMgr --> Controller : invalid
+  Controller -> UI : displayError("Invalid email format")
+else email format valid
+  UserMgr --> Controller : valid
+
+  Controller -> UserMgr : checkEmailUnique(email)
+  UserMgr -> DB : existsByEmail(email)
+  DB --> UserMgr : exists?
+
+  alt email already exists
+    UserMgr --> Controller : notUnique
+    Controller -> UI : displayError("Email already registered")
+  else email is unique
+    UserMgr --> Controller : unique
+
+    Controller -> UserMgr : validatePassword(password)
+    alt password weak
+      UserMgr --> Controller : weak
+      Controller -> UI : displayError("Password not strong enough")
+    else password strong
+      UserMgr --> Controller : strong
+
+      Controller -> UserMgr : createUser(details)
+      UserMgr -> DB : saveUser(userData)
+      DB --> UserMgr : userId
+      UserMgr --> Controller : userCreated(userId)
+
+      alt userType is Student/Faculty/Researcher
+        Controller -> UserMgr : setStatus(userId,"PENDING_APPROVAL")
+        UserMgr -> DB : updateStatus(userId,"PENDING_APPROVAL")
+        DB --> UserMgr : ok
+
+        Controller -> Notify : sendPendingApprovalNotice(userId)
+        Notify -> Coordinator : notifyApprovalPending(userId)
+
+        Controller -> UI : displayMessage("Awaiting departmental approval")
+
+        ... later ...
+        Coordinator -> Approvals : approveUser(userId)
+        Approvals -> DB : updateStatus(userId,"ACTIVE")
+        DB --> Approvals : ok
+        Approvals -> Notify : sendApprovalEmail(userId)
+        Notify -> User : approvalEmail()
+
+      else userType is Guest
+        Controller -> UserMgr : setStatus(userId,"ACTIVE")
+        UserMgr -> DB : updateStatus(userId,"ACTIVE")
+        DB --> UserMgr : ok
+
+        Controller -> Notify : sendWelcomeEmail(userId)
+        Notify -> User : welcomeEmail()
+        Controller -> UI : displayMessage("Registration successful")
+      end
+    end
+  end
+end
+@enduml
