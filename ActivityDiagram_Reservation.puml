@@ -1,0 +1,47 @@
+@startuml
+|User|
+start
+:Login to system;
+:Search/Browse equipment;
+
+repeat
+  :Select equipment and time slot;
+  |System|
+  :Check equipment availability;
+  if (Equipment available?) then (Yes)
+  else (No)
+    :Display: "Not available";
+    |User|
+    :Choose different time/equipment;
+  endif
+repeat while (Equipment available?) is (No)
+
+|System|
+:Calculate fee based on user type\n(Student: $10, Faculty: $15,\nResearcher: $20, Guest: $30);
+
+|User|
+:Confirm booking details;
+
+|System|
+:Calculate deposit (1 hour fee);
+
+repeat
+  :Initiate payment process;
+  |Payment System|
+  :Process payment;
+  if (Payment successful?) then (Yes)
+  else (No)
+    |System|
+    :Display: "Payment failed";
+    |User|
+    :Try different payment method;
+  endif
+repeat while (Payment successful?) is (No)
+
+|System|
+:Create reservation with status "Pending Check-in";
+:Send confirmation email;
+:Display: "Reservation confirmed";
+
+stop
+@enduml
