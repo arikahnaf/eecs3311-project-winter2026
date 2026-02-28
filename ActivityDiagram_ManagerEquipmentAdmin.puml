@@ -1,0 +1,45 @@
+@startuml
+|Lab Manager|
+start
+:Login to management portal;
+:Select equipment management option;
+
+if (Action?) then (Add Equipment)
+  :Enter equipment details\n(ID, description, lab location);
+  :Submit for addition;
+  |System|
+  :Validate unique ID;
+  :Create new equipment record;
+  :Set status = "Enabled";
+  :Display: "Equipment added successfully";
+
+elseif (Enable/Disable Equipment)
+  |Lab Manager|
+  :Select equipment;
+  :Choose enable/disable;
+  |System|
+  :Update equipment status;
+  :Display confirmation;
+
+elseif (Mark Unavailable for Maintenance)
+  |Lab Manager|
+  :Select equipment;
+  :Enter maintenance reason;
+  :Set unavailable period;
+  |System|
+  :Update equipment status = "Maintenance";
+  :Block reservations during period;
+  :Display: "Equipment marked for maintenance";
+
+elseif (View Usage Reports)
+  |Lab Manager|
+  :Select date range;
+  :Select equipment (optional);
+  |System|
+  :Generate usage report;
+  :Display usage statistics;
+
+endif
+
+stop
+@enduml
