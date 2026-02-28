@@ -1,0 +1,41 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "User\n(Student/Faculty/\nResearcher/Guest)" as User
+actor "Head Lab Coordinator" as HeadCoord
+actor "Lab Manager" as LabManager
+actor "Payment System" as PaymentSys
+actor "Sensor System" as SensorSys
+
+rectangle "Lab Equipment Reservation System" {
+
+  User --> (Register) : Req1
+  User --> (Login) : Req1
+  User --> (Browse Equipment) : Req3
+  User --> (Reserve Equipment) : Req3
+  User --> (Pay Deposit) : Req4
+  User --> (Modify Reservation) : Req8
+  User --> (Cancel Reservation) : Req8
+  User --> (Extend Reservation) : Req9
+  User --> (Provide ID) : Req8
+
+  (Reserve Equipment) .> (Check Availability) : <<include>>
+  (Pay Deposit) .> (Process Payment) : <<include>>
+
+  PaymentSys --> (Process Payment) : Req10
+
+  HeadCoord --> (Generate Lab Manager Account) : Req2
+  HeadCoord --> (Approve Department Accounts) : Req1
+
+  LabManager --> (Add Equipment) : Req6
+  LabManager --> (Enable Equipment) : Req6
+  LabManager --> (Disable Equipment) : Req6
+  LabManager --> (Mark Equipment Unavailable) : Req6
+  LabManager --> (View Usage Reports) : Req5
+
+  SensorSys --> (Track Equipment Usage) : Req5
+  (Track Equipment Usage) .> (Update Operation Status) : <<include>>
+}
+
+@enduml
