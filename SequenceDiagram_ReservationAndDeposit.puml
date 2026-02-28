@@ -1,0 +1,64 @@
+@startuml
+actor User
+participant "ReservationUI" as UI
+participant "ReservationController" as Controller
+participant "EquipmentManager" as EquipMgr
+participant "ReservationManager" as ResMgr
+participant "PaymentService" as PaySvc
+participant "PaymentGateway" as Gateway
+database "Database" as DB
+participant "NotificationService" as Notify
+
+User -> UI : searchEquipment(criteria)
+UI -> Controller : findEquipment(criteria)
+Controller -> EquipMgr : searchAvailable(criteria)
+EquipMgr -> DB : queryAvailableEquipment(criteria)
+DB --> EquipMgr : equipmentList
+EquipMgr --> Controller : equipmentList
+Controller -> UI : displayEquipment(equipmentList)
+
+User -> UI : selectEquipment(equipId, startTime, endTime)
+UI -> Controller : checkAvailability(equipId, startTime, endTime)
+Controller -> EquipMgr : isAvailable(equipId, startTime, endTime)
+EquipMgr -> DB : hasConflictReservation(equipId, startTime, endTime)
+DB --> EquipMgr : conflict?
+EquipMgr --> Controller : available?
+
+alt equipment not available
+  Controller -> UI : displayError("Equipment not available for selected time")
+else equipment available
+  Controller -> ResMgr : calculatePricing(userId, startTime, endTime)
+  ResMgr -> DB : getUserType(userId)
+  DB --> ResMgr : userType
+  ResMgr -> ResMgr : hourlyRate = rate(userType)
+  ResMgr -> ResMgr : deposit = 1 * hourlyRate
+  ResMgr -> ResMgr : totalCost = durationHours * hourlyRate
+  ResMgr --> Controller : totalCost, deposit, hourlyRate
+
+  Controller -> UI : showBookingSummary(totalCost, deposit)
+  User -> UI : confirmBooking(paymentMethod)
+  UI -> Controller : processReservation(userId, equipId, startTime, endTime, paymentMethod)
+
+  Controller -> PaySvc : payDeposit(userId, deposit, paymentMethod)
+  PaySvc -> Gateway : charge(deposit, paymentMethod)
+  Gateway --> PaySvc : paymentResult
+
+  alt payment successful
+    PaySvc --> Controller : paymentSuccess(transactionId)
+
+    Controller -> ResMgr : createReservation(userId, equipId, startTime, endTime, deposit, transactionId)
+    ResMgr -> DB : saveReservation(status="PENDING_CHECKIN", ...)
+    DB --> ResMgr : reservationId
+    ResMgr --> Controller : reservationConfirmed(reservationId)
+
+    Controller -> Notify : sendReservationConfirmation(userId, reservationId)
+    Notify --> User : confirmationEmail()
+
+    Controller -> UI : displayConfirmation(reservationId)
+
+  else payment failed
+    PaySvc --> Controller : paymentFailed(error)
+    Controller -> UI : displayError("Payment failed")
+  end
+end
+@enduml
