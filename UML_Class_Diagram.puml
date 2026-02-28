@@ -1,0 +1,183 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+
+' ===== Users =====
+abstract class User {
+  - userId: String
+  - email: String
+  - passwordHash: String
+  - status: AccountStatus
+  + register()
+  + login()
+  + viewReservations()
+}
+
+enum AccountStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
+}
+
+enum UserType {
+  STUDENT
+  FACULTY
+  RESEARCHER
+  GUEST
+}
+
+class Student {
+  - studentId: String
+  - department: String
+}
+
+class Faculty {
+  - staffId: String
+  - department: String
+}
+
+class Researcher {
+  - certificationId: String
+}
+
+class Guest {
+  - certificationId: String
+}
+
+User <|-- Student
+User <|-- Faculty
+User <|-- Researcher
+User <|-- Guest
+
+' ===== Equipment =====
+class Equipment {
+  - equipmentId: String
+  - description: String
+  - labLocation: String
+  - status: EquipmentStatus
+  + enable()
+  + disable()
+  + markMaintenance()
+}
+
+enum EquipmentStatus {
+  ENABLED
+  DISABLED
+  MAINTENANCE
+}
+
+' ===== Reservations =====
+class Reservation {
+  - reservationId: String
+  - startTime: DateTime
+  - endTime: DateTime
+  - status: ReservationStatus
+  - depositAmount: double
+  + modify()
+  + cancel()
+  + extend()
+  + checkIn()
+  + checkOut()
+}
+
+enum ReservationStatus {
+  PENDING_PAYMENT
+  PENDING_CHECKIN
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+' ===== Payments =====
+class Payment {
+  - paymentId: String
+  - amount: double
+  - method: PaymentMethod
+  - status: PaymentStatus
+  - transactionId: String
+  + process()
+}
+
+enum PaymentMethod {
+  CREDIT
+  DEBIT
+  INSTITUTIONAL
+  GRANT
+}
+
+enum PaymentStatus {
+  APPROVED
+  DECLINED
+  FORFEITED
+}
+
+' ===== Usage Tracking =====
+class UsageRecord {
+  - recordId: String
+  - timestamp: DateTime
+  - operationStatus: String
+}
+
+class SensorSystem {
+  + sendStatusUpdate(equipmentId, operationStatus, timestamp)
+}
+
+' ===== Approval =====
+class ApprovalRequest {
+  - requestId: String
+  - status: RequestStatus
+  + approve()
+  + reject()
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+class HeadLabCoordinator {
+  + approveAccount(userId)
+  + generateLabManagerAccount()
+}
+
+class LabManager {
+  - managerId: String
+  + addEquipment()
+  + enableEquipment()
+  + disableEquipment()
+  + markUnavailableForMaintenance()
+  + viewUsageReports()
+}
+
+class NotificationService {
+  + sendEmail(userId, subject, message)
+}
+
+class PricingPolicy {
+  + getHourlyRate(userType: UserType): double
+  + getDepositAmount(userType: UserType): double
+}
+
+' ===== Relationships =====
+User "1" -- "0..*" Reservation : makes
+Equipment "1" -- "0..*" Reservation : bookedFor
+
+Reservation "1" -- "0..*" Payment : payments
+Reservation "1" -- "0..*" UsageRecord : usage
+
+Equipment "1" -- "0..*" UsageRecord : logs
+
+SensorSystem ..> UsageRecord : reports
+SensorSystem ..> Equipment : monitors
+
+User "1" -- "0..1" ApprovalRequest : requires
+HeadLabCoordinator "1" -- "0..*" ApprovalRequest : reviews
+HeadLabCoordinator "1" -- "0..*" LabManager : creates
+LabManager "1" -- "0..*" Equipment : manages
+
+NotificationService ..> User : notifies
+PricingPolicy ..> Reservation : calculates
+
+@enduml
