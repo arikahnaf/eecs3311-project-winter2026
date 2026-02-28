@@ -1,0 +1,70 @@
+@startuml
+actor User
+participant "CheckInUI" as UI
+participant "CheckInController" as Controller
+participant "ReservationManager" as ResMgr
+participant "BillingService" as Billing
+participant "PaymentService" as PaySvc
+database "Database" as DB
+actor "SensorSystem" as Sensor
+
+User -> UI : checkIn(reservationId)
+UI -> Controller : processCheckIn(reservationId)
+
+Controller -> ResMgr : getReservation(reservationId)
+ResMgr -> DB : fetchReservation(reservationId)
+DB --> ResMgr : reservationData
+ResMgr --> Controller : reservation
+
+Controller -> Controller : calculateTimeDifference()
+
+alt check-in within 20 minutes
+    Controller -> ResMgr : updateStatus("ACTIVE")
+    ResMgr -> DB : setStatus("ACTIVE")
+    Controller -> UI : displayMessage("Check-in successful")
+    UI --> User : showEquipmentAccess()
+
+    Sensor -> DB : recordUsageData()
+
+    User -> UI : checkOut()
+    UI -> Controller : processCheckOut(reservationId)
+
+    Controller -> ResMgr : getUsageSummary(reservationId)
+    ResMgr -> DB : fetchUsageForReservation(reservationId)
+    DB --> ResMgr : usageSummary
+    ResMgr --> Controller : usageSummary
+
+    Controller -> Billing : calculateTotal(usageSummary)
+    Billing -> DB : getUserType()
+    DB --> Billing : userType
+    Billing --> Controller : totalCost
+
+    Controller -> Billing : applyDeposit(totalCost, deposit)
+    Billing --> Controller : remainingBalance
+
+    alt remainingBalance > 0
+        Controller -> PaySvc : chargeRemaining(userId, remainingBalance)
+        PaySvc --> Controller : paymentSuccess
+    else remainingBalance == 0
+        ' no payment required
+    end
+
+    Controller -> ResMgr : updateStatus("COMPLETED")
+    ResMgr -> DB : setStatus("COMPLETED")
+    Controller -> UI : displayReceipt()
+
+else check-in after 20 minutes
+    Controller -> ResMgr : updateStatus("NO_SHOW")
+    ResMgr -> DB : setStatus("NO_SHOW")
+
+    Controller -> Billing : forfeitDeposit()
+    Billing -> DB : recordForfeit()
+
+    Controller -> ResMgr : releaseEquipment()
+    ResMgr -> DB : releaseTimeSlot()
+
+    Controller -> UI : displayMessage("Late arrival - deposit forfeited")
+    UI --> User : showForfeitNotice()
+end
+
+@enduml
