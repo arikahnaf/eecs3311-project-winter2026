@@ -1,0 +1,55 @@
+@startuml component_diagram
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+title Lab Booking System - Component Diagram (D2)
+
+actor "Student/Faculty/Researcher/Guest" as EndUser
+actor "Lab Manager" as Manager
+actor "Head Lab Coordinator" as Coordinator
+
+component "GUI Layer\n(lab.gui)" as GUI
+component "Application Services\n(lab.service)" as Service
+component "Domain Model\n(lab.model)" as Model
+component "Pattern Modules\n(lab.pattern.*)" as Patterns
+component "Data Access Layer\n(lab.data repositories)" as Data
+component "CSV Storage\n(runtime-data/*.csv)" as CSV
+component "External Payment Systems\n(simulated adapters)" as PaymentExt
+component "Sensor Source\n(manager sensor update workflow)" as SensorExt
+
+EndUser --> GUI : register/login/book/modify/cancel/extend/check-in
+Manager --> GUI : manage equipment/sensor logs
+Coordinator --> GUI : approve users/create managers
+
+GUI --> Service : booking operations
+GUI --> Patterns : factory/singleton/proxy usage
+Service --> Patterns : adapter/decorator usage
+Service --> Data : read/write domain state
+Patterns --> Data : proxy real access, singleton user creation path
+Data --> CSV : persist entities
+Patterns --> PaymentExt : adapter dispatch
+SensorExt --> Data : sensor log entries
+
+note right of GUI
+Responsibilities:
+- screen flow
+- role-specific dashboard routing
+- user interactions
+end note
+
+note right of Service
+Responsibilities:
+- booking rules
+- overlap checks
+- deposit and extension billing
+- check-in timing logic
+end note
+
+note right of Data
+Responsibilities:
+- repository operations
+- CSV serialization
+- loading seed/runtime data
+end note
+
+@enduml

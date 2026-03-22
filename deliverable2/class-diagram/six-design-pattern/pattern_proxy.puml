@@ -1,0 +1,34 @@
+@startuml pattern_proxy
+title Proxy Pattern - Equipment Access Control and Log Access
+
+interface EquipmentAccess {
+  +getEquipment(id): Equipment
+  +getSensorLogs(id): List<SensorLog>
+  +updateStatus(id,status)
+}
+
+class RealEquipmentAccess
+class EquipmentProxy {
+  -actingUser: User
+  -cachedLogs: List<SensorLog>
+  -cachedEquipmentId: String
+}
+
+class ManagerDashboardFrame
+class EquipmentRepository
+class SensorLogRepository
+
+EquipmentAccess <|.. RealEquipmentAccess
+EquipmentAccess <|.. EquipmentProxy
+EquipmentProxy o--> RealEquipmentAccess : delegates
+RealEquipmentAccess --> EquipmentRepository
+RealEquipmentAccess --> SensorLogRepository
+
+ManagerDashboardFrame --> EquipmentProxy
+
+note right of EquipmentProxy
+Req6: manager-only status update
+Req5: controlled/lazy log access
+end note
+
+@enduml

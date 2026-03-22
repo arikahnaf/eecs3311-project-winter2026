@@ -1,0 +1,215 @@
+@startuml class_diagram_overall
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Lab Booking System - Updated Class Diagram (D2)
+
+package "lab.model" {
+  enum UserType
+  enum EquipmentStatus
+  enum BookingStatus
+  enum PaymentMethod
+
+  class User {
+    -id: int
+    -name: String
+    -email: String
+    -password: String
+    -userType: UserType
+    -identityNumber: String
+    -department: String
+    -approved: boolean
+    +requiresApproval(): boolean
+    +getHourlyRate(): double
+  }
+
+  class "User.Builder" as UserBuilder {
+    +id(int)
+    +name(String)
+    +email(String)
+    +password(String)
+    +userType(UserType)
+    +identityNumber(String)
+    +department(String)
+    +approved(boolean)
+    +build(): User
+  }
+
+  class Equipment {
+    -equipmentId: String
+    -name: String
+    -description: String
+    -labLocation: String
+    -status: EquipmentStatus
+    +isReservable(): boolean
+  }
+
+  class "Equipment.Builder" as EquipmentBuilder {
+    +equipmentId(String)
+    +name(String)
+    +description(String)
+    +labLocation(String)
+    +status(EquipmentStatus)
+    +build(): Equipment
+  }
+
+  class Booking {
+    -bookingId: String
+    -userId: int
+    -equipmentId: String
+    -startTime: LocalDateTime
+    -endTime: LocalDateTime
+    -status: BookingStatus
+    -paymentMethod: PaymentMethod
+    -totalCost: double
+    -depositAmount: double
+    -depositForfeited: boolean
+    -checkInTime: LocalDateTime
+    +getDurationHours(): double
+    +canModifyOrCancel(): boolean
+    +checkedInOnTime(): boolean
+    +getOutstandingBalance(): double
+  }
+
+  class SensorLog {
+    -logId: String
+    -equipmentId: String
+    -timestamp: LocalDateTime
+    -operationStatus: String
+    -note: String
+  }
+}
+
+UserBuilder --> User : builds
+EquipmentBuilder --> Equipment : builds
+
+package "lab.pattern.factory" {
+  interface UserFactory {
+    +create(...): User
+    +isValidIdentity(String): boolean
+    +requiresApproval(): boolean
+  }
+  class StudentFactory
+  class FacultyFactory
+  class ResearcherFactory
+  class GuestFactory
+  class UserFactoryProvider
+  class PasswordValidator
+
+  UserFactory <|.. StudentFactory
+  UserFactory <|.. FacultyFactory
+  UserFactory <|.. ResearcherFactory
+  UserFactory <|.. GuestFactory
+}
+
+package "lab.pattern.singleton" {
+  class HeadLabCoordinator {
+    -INSTANCE: HeadLabCoordinator
+    +getInstance(): HeadLabCoordinator
+    +autoGenerateManager(...): User
+  }
+}
+
+package "lab.pattern.adapter" {
+  interface PaymentProcessor {
+    +pay(String,double): String
+  }
+  class CreditCardAdapter
+  class DebitCardAdapter
+  class InstitutionalAccountAdapter
+  class ResearchGrantAdapter
+  class PaymentProcessorFactory
+  class CardGateway
+  class InstitutionalBillingSystem
+  class GrantAccountingSystem
+
+  PaymentProcessor <|.. CreditCardAdapter
+  PaymentProcessor <|.. DebitCardAdapter
+  PaymentProcessor <|.. InstitutionalAccountAdapter
+  PaymentProcessor <|.. ResearchGrantAdapter
+}
+
+package "lab.pattern.decorator" {
+  interface BookingCharge {
+    +cost(): double
+    +description(): String
+  }
+  abstract class BookingChargeDecorator
+  class BaseBookingCharge
+  class DepositDecorator
+  class ExtensionDecorator
+
+  BookingCharge <|.. BaseBookingCharge
+  BookingCharge <|.. BookingChargeDecorator
+  BookingChargeDecorator <|-- DepositDecorator
+  BookingChargeDecorator <|-- ExtensionDecorator
+  BookingChargeDecorator o--> BookingCharge : wraps
+}
+
+package "lab.pattern.proxy" {
+  interface EquipmentAccess {
+    +getEquipment(String): Equipment
+    +getSensorLogs(String): List<SensorLog>
+    +updateStatus(String,EquipmentStatus)
+  }
+  class RealEquipmentAccess
+  class EquipmentProxy
+
+  EquipmentAccess <|.. RealEquipmentAccess
+  EquipmentAccess <|.. EquipmentProxy
+  EquipmentProxy o--> RealEquipmentAccess : delegates
+}
+
+package "lab.data" {
+  class CsvTable
+  class AppContext
+  class UserRepository
+  class EquipmentRepository
+  class BookingRepository
+  class SensorLogRepository
+}
+
+package "lab.service" {
+  class BookingService
+  class DateFormats
+}
+
+package "lab.gui" {
+  class Main
+  class LoginFrame
+  class RegisterFrame
+  class HeadCoordinatorFrame
+  class ManagerDashboardFrame
+  class UserDashboardFrame
+  class GuiUtil
+}
+
+User "1" --> "0..*" Booking : creates
+Equipment "1" --> "0..*" Booking : reserved in
+Equipment "1" --> "0..*" SensorLog : produces
+
+AppContext o--> UserRepository
+AppContext o--> EquipmentRepository
+AppContext o--> BookingRepository
+AppContext o--> SensorLogRepository
+AppContext o--> RealEquipmentAccess
+
+BookingService --> AppContext
+BookingService --> BookingCharge
+BookingService --> PaymentProcessorFactory
+
+LoginFrame --> AppContext
+RegisterFrame --> AppContext
+HeadCoordinatorFrame --> AppContext
+ManagerDashboardFrame --> AppContext
+UserDashboardFrame --> AppContext
+
+LoginFrame --> HeadLabCoordinator
+RegisterFrame --> UserFactoryProvider
+RegisterFrame --> PasswordValidator
+HeadCoordinatorFrame --> HeadLabCoordinator
+ManagerDashboardFrame --> EquipmentProxy
+UserDashboardFrame --> BookingService
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml pattern_decorator
+title Decorator Pattern - Booking Charge Add-ons
+
+interface BookingCharge {
+  +cost(): double
+  +description(): String
+}
+
+class BaseBookingCharge
+abstract class BookingChargeDecorator {
+  #inner: BookingCharge
+}
+class DepositDecorator {
+  +depositAmount(): double
+}
+class ExtensionDecorator
+class BookingService
+
+BookingCharge <|.. BaseBookingCharge
+BookingCharge <|.. BookingChargeDecorator
+BookingChargeDecorator o--> BookingCharge : wraps
+BookingChargeDecorator <|-- DepositDecorator
+BookingChargeDecorator <|-- ExtensionDecorator
+
+BookingService --> BaseBookingCharge
+BookingService --> DepositDecorator
+BookingService --> ExtensionDecorator
+
+note right of DepositDecorator
+Req4: one-hour deposit
+and forfeiture handling
+end note
+
+note right of ExtensionDecorator
+Req9: extension cost
+when equipment is free
+end note
+
+@enduml

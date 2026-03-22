@@ -1,0 +1,24 @@
+@startuml pattern_singleton
+title Singleton Pattern - Head Lab Coordinator
+
+class HeadLabCoordinator {
+  -INSTANCE: HeadLabCoordinator
+  -HeadLabCoordinator()
+  +getInstance(): HeadLabCoordinator
+  +loginMatches(email,password): boolean
+  +autoGenerateManager(...): User
+}
+
+class LoginFrame
+class HeadCoordinatorFrame
+class User
+
+LoginFrame --> HeadLabCoordinator : getInstance().loginMatches()
+HeadCoordinatorFrame --> HeadLabCoordinator : getInstance().autoGenerateManager()
+HeadLabCoordinator --> User : create manager account
+
+note right of HeadLabCoordinator
+Req2: exactly one coordinator authority
+end note
+
+@enduml

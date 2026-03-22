@@ -1,0 +1,45 @@
+@startuml pattern_builder
+title Builder Pattern - User and Equipment Construction
+
+class User {
+  +getHourlyRate(): double
+}
+class "User.Builder" as UserBuilder {
+  +id(int)
+  +name(String)
+  +email(String)
+  +password(String)
+  +userType(UserType)
+  +identityNumber(String)
+  +department(String)
+  +approved(boolean)
+  +build(): User
+}
+
+class Equipment
+class "Equipment.Builder" as EquipmentBuilder {
+  +equipmentId(String)
+  +name(String)
+  +description(String)
+  +labLocation(String)
+  +status(EquipmentStatus)
+  +build(): Equipment
+}
+
+class RegisterFrame
+class ManagerDashboardFrame
+
+UserBuilder --> User : build()
+EquipmentBuilder --> Equipment : build()
+RegisterFrame --> UserBuilder : construct user safely
+ManagerDashboardFrame --> EquipmentBuilder : construct equipment safely
+
+note right of UserBuilder
+Req1, Req8
+end note
+
+note right of EquipmentBuilder
+Req7
+end note
+
+@enduml

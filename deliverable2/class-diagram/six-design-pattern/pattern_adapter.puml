@@ -1,0 +1,37 @@
+@startuml pattern_adapter
+title Adapter Pattern - Payment Methods
+
+interface PaymentProcessor {
+  +pay(ref, amount): String
+}
+
+class CreditCardAdapter
+class DebitCardAdapter
+class InstitutionalAccountAdapter
+class ResearchGrantAdapter
+
+class CardGateway
+class InstitutionalBillingSystem
+class GrantAccountingSystem
+class PaymentProcessorFactory
+class BookingService
+
+PaymentProcessor <|.. CreditCardAdapter
+PaymentProcessor <|.. DebitCardAdapter
+PaymentProcessor <|.. InstitutionalAccountAdapter
+PaymentProcessor <|.. ResearchGrantAdapter
+
+CreditCardAdapter --> CardGateway
+DebitCardAdapter --> CardGateway
+InstitutionalAccountAdapter --> InstitutionalBillingSystem
+ResearchGrantAdapter --> GrantAccountingSystem
+
+BookingService --> PaymentProcessorFactory : select adapter by PaymentMethod
+PaymentProcessorFactory --> PaymentProcessor
+
+note right of BookingService
+Req10: credit, debit,
+institutional, grant
+end note
+
+@enduml

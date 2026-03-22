@@ -1,0 +1,32 @@
+@startuml pattern_abstract_factory
+title Abstract Factory Pattern - User Registration Families
+
+interface UserFactory {
+  +create(...): User
+  +isValidIdentity(String): boolean
+  +requiresApproval(): boolean
+}
+
+class StudentFactory
+class FacultyFactory
+class ResearcherFactory
+class GuestFactory
+class UserFactoryProvider
+class RegisterFrame
+class User
+
+UserFactory <|.. StudentFactory
+UserFactory <|.. FacultyFactory
+UserFactory <|.. ResearcherFactory
+UserFactory <|.. GuestFactory
+
+RegisterFrame --> UserFactoryProvider : getFactory(UserType)
+UserFactoryProvider --> UserFactory
+UserFactory --> User : create()
+
+note right of RegisterFrame
+Req1: user registration families
+Req3: user type drives pricing
+end note
+
+@enduml
